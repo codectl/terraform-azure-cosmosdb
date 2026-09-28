@@ -1,0 +1,293 @@
+# Cosmos DB Account
+
+This Terraform module streamlines the creation and administration of Cosmos DB resources on Azure, offering customizable options for database accounts, consistency levels, throughput settings, and more, to ensure a highly scalable, globally distributed, and secure data management platform in the cloud.
+
+## Features
+
+Supports multiple mongodb databases and collections for efficient data organization
+
+Enables management of multiple sql databases and containers
+
+Utilization of terratest for robust validation
+
+Supports assigning multiple user assigned identities
+
+Integrates seamlessly with private endpoint capabilities for direct and secure connectivity
+
+Supports both system and multiple user assigned identities
+
+<!-- BEGIN_TF_DOCS -->
+## Requirements
+
+The following requirements are needed by this module:
+
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (~> 1.0)
+
+- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (~> 5.0)
+
+## Providers
+
+The following providers are used by this module:
+
+- <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) (~> 5.0)
+
+## Resources
+
+The following resources are used by this module:
+
+- [azurerm_cosmosdb_account.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_account) (resource)
+- [azurerm_cosmosdb_mongo_collection.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_mongo_collection) (resource)
+- [azurerm_cosmosdb_mongo_database.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_mongo_database) (resource)
+- [azurerm_cosmosdb_sql_container.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_sql_container) (resource)
+- [azurerm_cosmosdb_sql_database.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_sql_database) (resource)
+- [azurerm_cosmosdb_table.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cosmosdb_table) (resource)
+
+## Required Inputs
+
+The following input variables are required:
+
+### <a name="input_account"></a> [account](#input\_account)
+
+Description: contains all cosmosdb configuration
+
+Type:
+
+```hcl
+object({
+    name                                  = string
+    resource_group_name                   = optional(string)
+    location                              = optional(string)
+    offer_type                            = optional(string, "Standard")
+    kind                                  = string
+    automatic_failover_enabled            = optional(bool)
+    free_tier_enabled                     = optional(bool)
+    network_acl_bypass_ids                = optional(list(string))
+    mongo_server_version                  = optional(string)
+    access_key_metadata_writes_enabled    = optional(bool)
+    multiple_write_locations_enabled      = optional(bool)
+    local_authentication_enabled          = optional(bool)
+    network_acl_bypass_for_azure_services = optional(bool)
+    is_virtual_network_filter_enabled     = optional(bool)
+    public_network_access_enabled         = optional(bool)
+    analytical_storage_enabled            = optional(bool)
+    key_vault_key_id                      = optional(string)
+    partition_merge_enabled               = optional(bool)
+    create_mode                           = optional(string)
+    minimal_tls_version                   = optional(string)
+    default_identity_type                 = optional(string)
+    ip_range_filter                       = optional(set(string))
+    tags                                  = optional(map(string))
+    burst_capacity_enabled                = optional(bool)
+    cors_rule = optional(object({
+      allowed_headers    = list(string)
+      allowed_methods    = list(string)
+      allowed_origins    = list(string)
+      exposed_headers    = list(string)
+      max_age_in_seconds = number
+    }))
+    capacity = optional(object({
+      total_throughput_limit = number
+    }))
+    identity = optional(object({
+      type         = string
+      identity_ids = optional(list(string))
+    }))
+    capabilities = optional(list(string), [])
+    analytical_storage = optional(object({
+      schema_type = string
+    }))
+    backup = optional(object({
+      type                = string
+      tier                = optional(string)
+      retention_in_hours  = optional(number)
+      interval_in_minutes = optional(number)
+      storage_redundancy  = optional(string)
+    }))
+    restore = optional(object({
+      tables_to_restore          = optional(list(string))
+      restore_timestamp_in_utc   = string
+      source_cosmosdb_account_id = string
+      database = optional(map(object({
+        name             = string
+        collection_names = optional(list(string))
+      })), {})
+      gremlin_database = optional(map(object({
+        name        = string
+        graph_names = list(string)
+      })), {})
+    }))
+    geo_location = map(object({
+      location          = string
+      failover_priority = number
+      zone_redundant    = optional(bool)
+    }))
+    consistency_policy = object({
+      consistency_level       = string
+      max_interval_in_seconds = optional(number)
+      max_staleness_prefix    = optional(number)
+    })
+    virtual_network_rule = optional(map(object({
+      id                                   = string
+      ignore_missing_vnet_service_endpoint = optional(bool)
+    })), {})
+    databases = optional(object({
+      mongo = optional(map(object({
+        name       = optional(string)
+        throughput = optional(number)
+        autoscale_settings = optional(object({
+          max_throughput = number
+        }))
+        collections = optional(map(object({
+          name       = optional(string)
+          throughput = optional(number)
+          autoscale_settings = optional(object({
+            max_throughput = number
+          }))
+          shard_key              = optional(string)
+          analytical_storage_ttl = optional(number)
+          default_ttl_seconds    = optional(number)
+          index = optional(map(object({
+            keys   = list(string)
+            unique = optional(bool)
+          })))
+        })), {})
+      })), {})
+      sql = optional(map(object({
+        name       = optional(string)
+        throughput = optional(number)
+        autoscale_settings = optional(object({
+          max_throughput = number
+        }))
+        containers = optional(map(object({
+          name       = optional(string)
+          throughput = optional(number)
+          autoscale_settings = optional(object({
+            max_throughput = number
+          }))
+          analytical_storage_ttl = optional(number)
+          conflict_resolution_policy = optional(object({
+            mode                          = string
+            conflict_resolution_path      = optional(string)
+            conflict_resolution_procedure = optional(string)
+          }))
+          index_policy = optional(object({
+            indexing_mode  = optional(string)
+            included_paths = optional(list(string), [])
+            excluded_paths = optional(list(string), [])
+            composite_index = optional(map(object({
+              index = list(object({
+                path  = string
+                order = string
+              }))
+            })), {})
+            spatial_index = optional(map(object({
+              path = string
+            })), {})
+          }))
+          unique_key = optional(map(object({
+            paths = list(string)
+          })), {})
+          partition_key_paths   = list(string)
+          partition_key_kind    = optional(string)
+          partition_key_version = optional(number)
+          default_ttl           = optional(number)
+        })), {})
+      })), {})
+    }), {})
+    tables = optional(map(object({
+      name       = optional(string)
+      throughput = optional(number)
+      autoscale_settings = optional(object({
+        max_throughput = number
+      }))
+    })), {})
+  })
+```
+
+## Optional Inputs
+
+The following input variables are optional (have default values):
+
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: default azure region to be used.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
+
+Description: default resource group to be used.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_tags"></a> [tags](#input\_tags)
+
+Description: tags to be added to the resources
+
+Type: `map(string)`
+
+Default: `{}`
+
+## Outputs
+
+The following outputs are exported:
+
+### <a name="output_account"></a> [account](#output\_account)
+
+Description: cosmosdb account
+
+### <a name="output_mongo_collections"></a> [mongo\_collections](#output\_mongo\_collections)
+
+Description: mongo collections
+
+### <a name="output_mongo_databases"></a> [mongo\_databases](#output\_mongo\_databases)
+
+Description: mongo databases
+
+### <a name="output_sql_containers"></a> [sql\_containers](#output\_sql\_containers)
+
+Description: sql containers
+
+### <a name="output_sql_databases"></a> [sql\_databases](#output\_sql\_databases)
+
+Description: sql databases
+
+### <a name="output_tables"></a> [tables](#output\_tables)
+
+Description: cosmosdb tables
+<!-- END_TF_DOCS -->
+
+## Goals
+
+For more information, please see our [goals and non-goals](./GOALS.md).
+
+## Testing
+
+For more information, please see our testing [guidelines](./TESTING.md)
+
+## Notes
+
+Using a dedicated module, we've developed a naming convention for resources that's based on specific regular expressions for each type, ensuring correct abbreviations and offering flexibility with multiple prefixes and suffixes.
+
+Full examples detailing all usages, along with integrations with dependency modules, are located in the examples directory.
+
+To update the module's documentation run `make doc`
+
+## Contributors
+
+We welcome contributions from the community! Whether it's reporting a bug, suggesting a new feature, or submitting a pull request, your input is highly valued.
+
+For more information, please see our contribution [guidelines](./CONTRIBUTING.md).
+
+## License
+
+MIT Licensed. See [LICENSE](./LICENSE) for full details.
+
+## References
+
+- [Documentation](https://learn.microsoft.com/en-us/azure/cosmos-db/)
+- [Rest Api](https://learn.microsoft.com/en-us/rest/api/cosmos-db/)
